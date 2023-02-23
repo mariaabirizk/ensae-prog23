@@ -59,7 +59,54 @@ class Graph:
     
 
     def get_path_with_power(self, src, dest, power):
-        raise NotImplementedError
+        W=[]
+        for l in self.connect_components_set() :
+            if src in l:
+                W=l
+        if dest in W : #cad si dep et arrivee dans la meme comp alors on peut les relier
+            
+                def explorer(src):
+                    for j in range(0,self.graph[src]): # j est couple du vois et puiss et dist
+                        #j(0) sera tjrs ds self.nodes car c est le voisin de src
+                        if j== dest:
+                            print("lbbllb")
+                        else:
+                            a=self.graph[j]
+                            voisinsj=a.remove((src,power_min,dist)) #rev powermin et dist #ca me donne les vois de j sans src
+
+                            if voisinsj == []: #cad si j n a pas de voisin
+                                if j == dest:
+                                    print("le chemin est"+(src,j,dest)) #modifier le print
+
+                            #cad cas else j n'a pas de vois et n est pas la dest on passe a un autre j, ca sort de if
+                            else: #cas ou j a des voisins
+                                explorer(j) #PROB! on peut mettre deux entrees a la ftc expplorer la 2e est une liste 
+
+
+
+
+                    parent=j
+                    U.append(j)
+                    for W in self.graph[j]:
+                        if W[0] not in U :
+                            if W[0]= dest:
+                                errêter
+                            elif W[0]=[]
+                                explorer(W[0])
+            for i in self.graph[i]:
+            Signe=1
+            for l in L :
+                if i in l : 
+                    Signe=-1
+            if Signe==1:
+                U=[]
+                explorer(i)
+                L.append(U)   
+        else :
+            return None
+
+            
+     
     
 
     def connected_components(self):
