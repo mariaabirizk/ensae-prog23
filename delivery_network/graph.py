@@ -41,59 +41,68 @@ class Graph:
         return output
     
     def add_edge(self, node1, node2, power_min, dist=1):
-        """
-        Adds an edge to the graph. Graphs are not oriented, hence an edge is added to the adjacency list of both end nodes. 
-
-        Parameters: 
-        -----------
-        node1: NodeType
-            First end (node) of the edge
-        node2: NodeType
-            Second end (node) of the edge
-        power_min: numeric (int or float)
-            Minimum power on this edge
-        dist: numeric (int or float), optional
-            Distance between node1 and node2 on the edge. Default is 1.
-        """
-        raise NotImplementedError
+        if node1 not in self.nodes: 
+            self.nodes.append(node1) 
+            self.graph[node1]=[] 
+            self.nb_nodes+=1 
+        if node2 not in self.nodes: 
+            self.nodes.append(node2) 
+            self.graph[node2]=[] 
+            self.nb_nodes+=1 
+        self.graph[node1].append((node2,power_min,dist)) 
+        self.graph[node2].append((node1,power_min,dist)) 
+        self.nb_edges+=1 
+        return self.graph
     
 
     def get_path_with_power(self, src, dest, power):
         W=[]
-        for l in self.connect_components_set() :
+        #voisins_deja_visite=[]
+        for l in self.connected_components(): #l est un element de la liste obtenu par la meth comp 
             if src in l:
                 W=l
         if dest in W : #cad si dep et arrivee dans la meme comp alors on peut les relier
-            
                 def explorer(src):
-                    for j in range(0,self.graph[src]): # j est couple du vois et puiss et dist
-                        #j(0) sera tjrs ds self.nodes car c est le voisin de src
-                        if j== dest:
-                            print("lbbllb")
-                        else:
-                            a=self.graph[j]
-                            voisinsj=a.remove((src,power_min,dist)) #rev powermin et dist #ca me donne les vois de j sans src
+                    trajet=[src]
+                    #voisins_deja_visite = voisins_deja_visite.remove((src,power_min,dist))
 
-                            if voisinsj == []: #cad si j n a pas de voisin
-                                if j == dest:
-                                    print("le chemin est"+(src,j,dest)) #modifier le print
+                    for j in self.graph[src]: # j est couple du vois et puiss et dist
+                        #j(0) sera tjrs ds self.nodes car c est le voisin de src
+                        if j[0] == dest and power>=j[1]:
+                            trajet.append(j[0])
+                            return (trajet)
+                        else:
+                            a=[] #pour obtenir les couples de voisins de j
+                            for v in self.graph[j[0]]:
+                                a.append(v[0])
+
+                            voisinsj=a.remove(src) #rev powermin et dist #ca me donne les vois de j sans src
+                            explorer(j)
+
+                            '''if voisinsj == []: #cad si j n a pas de voisin
+                                #A modifier 
+                                if j[0] == dest and power>= j[1]:
+                                    trajet.append(j[0])
+                                    return trajet.append(dest) #modifier le print
 
                             #cad cas else j n'a pas de vois et n est pas la dest on passe a un autre j, ca sort de if
                             else: #cas ou j a des voisins
-                                explorer(j) #PROB! on peut mettre deux entrees a la ftc expplorer la 2e est une liste 
+                                #d=self.graph[j].remove((.....,power_min,dist))
+                                explorer(j) #PROB! on peut mettre deux entrees a la ftc expplorer la 2e est une liste '''
+        else :
+            return None
 
 
+    
 
-
-                    parent=j
-                    U.append(j)
-                    for W in self.graph[j]:
-                        if W[0] not in U :
-                            if W[0]= dest:
-                                errêter
-                            elif W[0]=[]
-                                explorer(W[0])
-            for i in self.graph[i]:
+    def connected_components(self):
+        L=[]
+        def explorer(i):
+            U.append(i)
+            for W in self.graph[i]:
+                if W[0] not in U :
+                    explorer(W[0])
+        for i in self.graph:
             Signe=1
             for l in L :
                 if i in l : 
@@ -101,16 +110,8 @@ class Graph:
             if Signe==1:
                 U=[]
                 explorer(i)
-                L.append(U)   
-        else :
-            return None
-
-            
-     
-    
-
-    def connected_components(self):
-        raise NotImplementedError
+                L.append(U)
+        return L
 
 
     def connected_components_set(self):
@@ -128,23 +129,21 @@ class Graph:
 
 
 def graph_from_file(filename):
-    """
-    Reads a text file and returns the graph as an object of the Graph class.
-
-    The file should have the following format: 
-        The first line of the file is 'n m'
-        The next m lines have 'node1 node2 power_min dist' or 'node1 node2 power_min' (if dist is missing, it will be set to 1 by default)
-        The nodes (node1, node2) should be named 1..n
-        All values are integers.
-
-    Parameters: 
-    -----------
-    filename: str
-        The name of the file
-
-    Outputs: 
-    -----------
-    G: Graph
-        An object of the class Graph with the graph from file_name.
-    """
-    raise NotImplementedError
+    f = open("/home/onyxia/work/ensae-prog23/"+filename, "r") #On rajoute le début du chemin pour que le programme trouve le chemin du fichier 
+    L = f.readlines()#On transforme le tableau en une liste de chaîne de caractères, avec une chaîne = une ligne 
+    lignes=[] 
+    g=Graph([]) 
+    for i in range(1,len(L)): 
+        lignes.append(L[i].split()) #"lignes" est une liste, donc les éléments (qui représentent les lignes de notre tableau) sont des listes de chaînes de caractères 
+    for line in lignes: 
+        if len(line)==3: 
+            g.add_edge(int(line[0]),int(line[1]),int(line[2]),1) 
+        else : 
+            g.add_edge(int(line[0]),int(line[1]),int(line[2]),int(line[3])) 
+    #Attention ! Tous les sommets ne sont pas forcément reliés à d'autres sommets ! Dans cette partie du code, on s'occupe de mettre dans le graphe les sommets isolés 
+    nb_nodes=int(L[0].split()[0]) #Le nombre de sommets est donné par le premier nombre de la première ligne 
+    for n in range(1,nb_nodes+1): #On suppose ici que s'il y a n noeuds, tous les noeuds sont exactement tous les numéros de 1 à n. 
+        if n not in g.graph: 
+            g.graph[n]=[] 
+            g.nb_nodes+=1 #Le nombre d'arêtes n'a pas été modifié, mais le nombre de sommets a lui changé 
+    return g 
