@@ -61,36 +61,25 @@ class Graph:
         for l in self.connected_components(): #l est un element de la liste obtenu par la meth comp 
             if src in l:
                 W=l
+
         if dest in W : #cad si dep et arrivee dans la meme comp alors on peut les relier
-                def explorer(src):
-                    trajet=[src]
-                    #voisins_deja_visite = voisins_deja_visite.remove((src,power_min,dist))
-
-                    for j in self.graph[src]: # j est couple du vois et puiss et dist
-                        #j(0) sera tjrs ds self.nodes car c est le voisin de src
-                        if j[0] == dest and power>=j[1]:
-                            trajet.append(j[0])
-                            return (trajet)
+            visite=[]
+            trajet=[src]
+            def explorer(ville):
+                if ville==dest:
+                    return trajet
+                visite.append(ville)
+                voisins_de_ville=self.graph[ville]
+                for voisin in voisins_de_ville: #je vais parcourir vois du depart
+                    if voisin[0] not in visite and power>=voisin[1]:
+                        trajet.append(voisin[0])
+                        resultat = explorer(voisin[0])
+                        if resultat is not None:
+                            return resultat
                         else:
-                            a=[] #pour obtenir les couples de voisins de j
-                            for v in self.graph[j[0]]:
-                                a.append(v[0])
-
-                            voisinsj=a.remove(src) #rev powermin et dist #ca me donne les vois de j sans src
-                            explorer(j)
-
-                            '''if voisinsj == []: #cad si j n a pas de voisin
-                                #A modifier 
-                                if j[0] == dest and power>= j[1]:
-                                    trajet.append(j[0])
-                                    return trajet.append(dest) #modifier le print
-
-                            #cad cas else j n'a pas de vois et n est pas la dest on passe a un autre j, ca sort de if
-                            else: #cas ou j a des voisins
-                                #d=self.graph[j].remove((.....,power_min,dist))
-                                explorer(j) #PROB! on peut mettre deux entrees a la ftc expplorer la 2e est une liste '''
-        else :
-            return None
+                            trajet.pop() #cad dans le cas else on reprend un nouv vois
+                return None #c'est le cas ou pas de chemin
+        return explorer(src) 
 
 
     
@@ -112,7 +101,7 @@ class Graph:
                 explorer(i)
                 L.append(U)
         return L
-
+        #ajouter alg pr complexite
 
     def connected_components_set(self):
         """
