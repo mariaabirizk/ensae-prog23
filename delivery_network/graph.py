@@ -110,11 +110,27 @@ class Graph:
         """
         return set(map(frozenset, self.connected_components()))
     
-    def min_power(self, src, dest):
-        """
-        Should return path, min_power. 
-        """
-        raise NotImplementedError
+    def min_power(self, src, dest): #prob avec graph[cle] mafine
+        maxi=0
+        for voisins in self.graph[src]:
+            if voisins[1]>maxi :
+                maxi=voisins[1]  #je ne vais pas faire ca pour min pour ne pas reparcourir if
+
+        puissance_min = 0
+        puissance_max = maxi
+        chemin=[]
+        while puissance_min < puissance_max:
+            puissance = (puissance_min + puissance_max) // 2
+            if get_path_with_power(src, dest, puissance) is not None: #cad si c est un des chemins possible j'essaie de voir s'il ya un pour une plus petite puiss
+                puissance_max = puissance
+                
+            else:
+                puissance_min = puissance + 1  #on augmente la puiss pour arriver a une puisssance efficace
+
+        chemin=get_path_with_power(src,dest,puissance) #on retourne le chemin pr la puiss
+        puissance = puissance_min
+        return (chemin, puissance)
+
 
 
 def graph_from_file(filename):
@@ -125,7 +141,7 @@ def graph_from_file(filename):
     for i in range(1,len(L)): 
         lignes.append(L[i].split()) #"lignes" est une liste, donc les éléments (qui représentent les lignes de notre tableau) sont des listes de chaînes de caractères 
     for line in lignes: 
-        if len(line)==3: 
+        if len(line)==3: #cad les lignes qui contiennent depart arrivee puissance
             g.add_edge(int(line[0]),int(line[1]),int(line[2]),1) 
         else : 
             g.add_edge(int(line[0]),int(line[1]),int(line[2]),int(line[3])) 
@@ -136,3 +152,4 @@ def graph_from_file(filename):
             g.graph[n]=[] 
             g.nb_nodes+=1 #Le nombre d'arêtes n'a pas été modifié, mais le nombre de sommets a lui changé 
     return g 
+
