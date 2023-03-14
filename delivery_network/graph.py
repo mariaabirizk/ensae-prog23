@@ -121,13 +121,13 @@ class Graph:
         chemin=[]
         while puissance_min < puissance_max:
             puissance = (puissance_min + puissance_max) // 2
-            if get_path_with_power(src, dest, puissance) is not None: #cad si c est un des chemins possible j'essaie de voir s'il ya un pour une plus petite puiss
+            if self.get_path_with_power(src, dest, puissance) is not None: #cad si c est un des chemins possible j'essaie de voir s'il ya un pour une plus petite puiss
                 puissance_max = puissance
                 
             else:
-                puissance_min = puissance + 1  #on augmente la puiss pour arriver a une puisssance efficace
+                puissance_min = puissance   #on augmente la puiss pour arriver a une puisssance efficace
 
-        chemin=get_path_with_power(src,dest,puissance) #on retourne le chemin pr la puiss
+        chemin=self.get_path_with_power(src,dest,puissance) #on retourne le chemin pr la puiss
         puissance = puissance_min
         return (chemin, puissance)
 
