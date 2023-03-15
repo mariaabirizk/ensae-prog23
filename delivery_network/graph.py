@@ -120,26 +120,27 @@ class Graph:
         """
         return set(map(frozenset, self.connected_components()))
     
-    def min_power(self, src, dest): #prob avec graph[cle] mafine
+    def min_power(self, src, dest): 
         maxi=0
-        for voisins in self.graph[src]:
-            if voisins[1]>maxi :
-                maxi=voisins[1]  #je ne vais pas faire ca pour min pour ne pas reparcourir if
-
-        puissance_min = 0
-        puissance_max = maxi
-        chemin=[]
-        while puissance_min < puissance_max:
-            puissance = (puissance_min + puissance_max) // 2
-            if self.get_path_with_power(src, dest, puissance) is not None: #cad si c est un des chemins possible j'essaie de voir s'il ya un pour une plus petite puiss
-                puissance_max = puissance
-                
+        for node in self.nodes: # on doit recherche la puiss max dans tous le graphe pas juste dans les voisins de src
+            for voisins in self.graph[node]:
+                if voisins[1]>maxi :
+                    maxi=voisins[1]  #je ne vais pas faire ca pour min pour ne pas reparcourir if y a plus de chance de trouver la puissance en partant de 0 que de pqrtir de la puissance min
+        
+        puiss_min=0
+        puiss_max=maxi
+        chemin =[]
+        
+        # comme la recherche binaire consiste a divise en 2 partie a peu pres egale on va divise les seg de puiss de bornes puiss min et puiss max
+        while puiss_min < puiss_max :               # si on met <=; en cas d'egalite on aura puiss=0 et apres puiss_min=0 et on pourrait rentrer dans des boucles infinis
+            puiss = (puiss_max + puiss_min)//2      #avec le - ca marche pas car dans des cas on ne sera pas dans l'intervalle voulu
+            if self.get_path_with_power(src, dest, puiss) is not None:
+                puiss_max=puiss #on essaye de trouver une puiss plus petite que celle trouver
             else:
-                puissance_min = puissance   #on augmente la puiss pour arriver a une puisssance efficace
-
-        chemin=self.get_path_with_power(src,dest,puissance) #on retourne le chemin pr la puiss
-        puissance = puissance_min
-        return (chemin, puissance)
+                puiss_min = puiss+1 # on recherche dans la partie contenant les valeurs supperieur a puiss comme la puissance "puiss" ne suffit pas pour le parcours, si on rajoute pas le 1 on aura un prob qd on trouve la puiss minimale la boucle while rstera infini
+        
+        chemin= self.get_path_with_power(src, dest, puiss_max) # la derniere fois ou on rentrera dans la boucle puiss va etre modifie eton rentrera dans le cas else donc on ne peut pas mettre puiss
+        return (chemin, puiss_max)
 
 
 
