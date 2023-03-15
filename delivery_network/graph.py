@@ -160,3 +160,27 @@ def graph_from_file(filename):
             g.nb_nodes+=1 #Le nombre d'arêtes n'a pas été modifié, mais le nombre de sommets a lui changé 
     return g 
 
+def kruskal(graphe): #trions la liste des aretes
+    #1-doit retourner un element de type Graph de meme nombre de noeuds que graphe
+    nouvgraphe=Graph()
+
+    #2- trions les aretres de "graphe" par ordre croissant
+
+    d={} # je veux stocker dans d les aretres et la puissance associee a chacune
+    l=[] #je veux stocker dans l les puissances
+    for i in range (0,len(graphe.graph())):
+        for voisin in graphe.graph[i]: #cad je regarde pour le noeud i ses voisins
+            if (i,voisin[0]) or (voisin[0],i) not in d:
+                d[voisin[1]].append(i,voisin[0])
+                l.append(voisin[1])
+    #on obtient ainsi d un dictionnaire dont les cles sont les puissances des aretes et les valeurs sont les aretes
+    l.sort()
+    #a present pour acceder aux aretes de puissance dans l: on a qu'a faire d[la puissance en question]
+
+    #3-construisons nouvgraphe
+    for j in range (0,len(l)): #pour une puissance j 
+        for arete in d[l[j]]: #d[l[j]] peut contenir plusieurs aretes 
+            if :
+                nouvgraphe.add_edge(arete[0],arete[1],l[j])
+
+    return ​nouvgraphe
