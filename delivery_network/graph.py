@@ -76,8 +76,7 @@ class Graph:
                             if power >= puissance:
                                 chemin.append(dest)
                                 return chemin
-                            else:
-                                return None
+                            
                         else:
                             if voisin not in visite and power>=puissance:
                                 chemin.append(voisin)
@@ -88,9 +87,6 @@ class Graph:
                                     
                         
                 return explorer(src)
-
-    
-
 
     
 
