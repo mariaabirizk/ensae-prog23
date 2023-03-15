@@ -56,30 +56,40 @@ class Graph:
     
 
     def get_path_with_power(self, src, dest, power):
-        W=[]
-        #voisins_deja_visite=[]
-        for l in self.connected_components(): #l est un element de la liste obtenu par la meth comp 
-            if src in l:
-                W=l
+            W=[]
+            for l in self.connected_components(): #l est un element de la liste obtenu par la meth comp 
+                if src in l:
+                    W=l
 
-        if dest in W : #cad si dep et arrivee dans la meme comp alors on peut les relier
-            visite=[]
-            trajet=[src]
-            def explorer(ville):
-                if ville==dest:
-                    return trajet
-                visite.append(ville)
-                voisins_de_ville=self.graph[ville]
-                for voisin in voisins_de_ville: #je vais parcourir vois du depart
-                    if voisin[0] not in visite and power>=voisin[1]:
-                        trajet.append(voisin[0])
-                        resultat = explorer(voisin[0])
-                        if resultat is not None:
-                            return resultat
+
+            if dest in W: #cad si dep et arrivee dans la meme comp alors on peut les relier
+                visite=[]
+                chemin=[src] # si on def chemin dans explorer a chaque fois qu'on explore un voisin le chemin va changer et ne sera plus initialement debutant de src
+                def explorer(ville):
+                    if ville == dest:
+                        return chemin #on n'a pas besoin de voir la puissance comme c'est la meme ville donc y a pas de route a traversee
+                    visite.append(ville) # je l'avais mis a la fin de la boucle for mais ca ne marche pas vu que ca rajoute la ville visitee a la fin apres avoir reparcouru les voisins deja visites
+                    for voisins in self.graph[ville]:
+                        voisin=voisins[0]
+                        puissance=voisins[1]
+                        if voisin == dest:
+                            if power >= puissance:
+                                chemin.append(dest)
+                                return chemin
+                            else:
+                                return None
                         else:
-                            trajet.pop() #cad dans le cas else on reprend un nouv vois
-                return None #c'est le cas ou pas de chemin
-        return explorer(src) 
+                            if voisin not in visite and power>=puissance:
+                                chemin.append(voisin)
+                                if explorer(voisin) is None:
+                                    chemin.pop( ) #pour effacer toutes les villes ajouter inutilles
+                                else:
+                                    return chemin
+                                    
+                        
+                return explorer(src)
+
+    
 
 
     
