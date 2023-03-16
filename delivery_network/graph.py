@@ -138,6 +138,62 @@ class Graph:
         chemin= self.get_path_with_power(src, dest, puiss_max) # la derniere fois ou on rentrera dans la boucle puiss va etre modifie eton rentrera dans le cas else donc on ne peut pas mettre puiss
         return (chemin, puiss_max)
 
+    def function(fichier_trucks,fichier_routes,fichier_network): #on lui donne les fichiers: routes (trajet,utilite), trucks (p,c) 
+        b= 25*(10**9) #contrainte budg
+        depenses=0
+        utilite = 0
+        while depenses <= b :
+            #  je veux acceder aux lignes du fichier_routes, chaque ligne i>=1 represente le trajet i et son utilite i 
+            g=graph_from_file("input/"+fichier_routes)  #il faudra peut etre deplacer la fct
+            d=g.graph
+            #d.items() me donne une liste tq l'element k contient (clek,valeurk)
+        
+            gg= graph_from_file("input/"+fichier_network)
+            # g sera un graphe tq: cles i -> [(ville j , u i->j),(ville k , u i->k),.......]
+            
+            for i in range (0,len(d.items())):    #on parcours tous les noeuds et donc toutes les villes qui sont le depart d'un trajet dans le fichier routes
+                for ville_i, valeur in d.items[i]:
+                for j in range (0, len(valeur)):
+                    ville_j= valeur[j][0] #rep la ville arrivee du trajet
+                    utilite_ij= valeur[j][1] #rep l'utilite de ce trajet
+                    trajet_ij = (ville_i,ville_j,utilite_ij) 
+                    pmin= gg.min_power(ville_i,ville_j)
+                    # a present on travail dans le fichier trucks
+                    dd=dict_from_file_trucks(fichier_trucks)
+                    liste= dd.items() #dd.items() va etre une liste tq chaque element represente: [p,c]
+                    #trions la liste dd.items suivant le cout mais j pense faut revoir car pb avec liste de liste
+                    liste.sort(key=lambda x: x[1]) # on aura liste de (p,c) trier par cout croissant
+
+                    for i in range (0,len(liste)):
+                        if liste[i][0]< pmin: # liste[i][0] est puissance donnee dans le fichier truck 
+                            liste.delete(liste[i])
+                    #notre liste a present contient les puiss et cout tq puiss >= pmin et triee par odre croissant de cout
+                    cout_minimal=liste[0][1]
+                    
+
+
+
+
+def dict_from_file_trucks(filename):
+    f = open("/home/onyxia/work/ensae-prog23/"+filename, "r") #On rajoute le début du chemin pour que le programme trouve le chemin du fichier 
+    L = f.readlines()#On transforme le tableau en une liste de chaîne de caractères, avec une chaîne = une ligne 
+    lignes=[] 
+    d={}
+    for i in range(1,len(L)): 
+        lignes.append(L[i].split())  #"lignes" est une liste, donc les éléments (qui représentent les lignes de notre tableau) sont des listes de chaînes de caractères 
+    for line in lignes: 
+        if len(line)==2: 
+            d[int(line[0])] =int(line[1])
+    return d # d sera tq d[pi]=ci
+
+
+
+
+
+
+
+
+
 
 
 def graph_from_file(filename):
@@ -161,6 +217,9 @@ def graph_from_file(filename):
     return g 
 
 
+
+
+
 #Pour le Compte Rendu, cette fonction kruskal n'est pas notre version finale, on n'a pas encore obtenu nos resultats attendus
 def kruskal(graphe): #trions la liste des aretes
     #1-doit retourner un element de type Graph de meme nombre de noeuds que graphe
@@ -170,7 +229,7 @@ def kruskal(graphe): #trions la liste des aretes
 
     d={} # je veux stocker dans d les aretes et la puissance associee a chacune
     l=[] #je veux stocker dans l les puissances
-    for i in range (0,len(graphe.graph())):
+    for i in range (0,len(graphe.graph)): # ma bhot () car c est pas une methode mais attribut
         for voisin in graphe.graph[i]: #cad je regarde pour le noeud i ses voisins
             if (i,voisin[0]) or (voisin[0],i) not in d:
                 d[voisin[1]].append(i,voisin[0])
@@ -187,5 +246,5 @@ def kruskal(graphe): #trions la liste des aretes
             # si les deux etremites des aretes ont etes visites plus que 2 fois on risque d'obtenir un cycle si on la rajoute une 3e
             if nouvgraphe.get_path_with_power(arete[0], arete[1], l[-1]) is not None:
                 nouvgraphe.add_edge(arete[0],arete[1],l[j])
-
+############################################ continuer et mettre la fonction dans la class Graph 
     return (nouvgraphe)
