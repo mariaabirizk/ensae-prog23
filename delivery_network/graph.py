@@ -138,53 +138,122 @@ class Graph:
         chemin= self.get_path_with_power(src, dest, puiss_max) # la derniere fois ou on rentrera dans la boucle puiss va etre modifie eton rentrera dans le cas else donc on ne peut pas mettre puiss
         return (chemin, puiss_max)
 
-    def function(fichier_trucks,fichier_routes,fichier_network): #on lui donne les fichiers: routes (trajet,utilite), trucks (p,c) 
+    def function_qu18_methode2(fichier_trucks,fichier_routes,fichier_network): 
+        # je veux acceder aux lignes du fichier_routes, chaque ligne i>=1 represente le trajet i=(ville1,ville2) et son utilite i 
+        lr=liste_from_file("input/"+fichier_routes)
+        lr.sort(key=lambda x: x[1]) #lr sera triee par ordre croissant d'utilite 
+        
+        g= graph_from_file("input/"+fichier_network)
+
+        #pour le fichier trucks
+        lt=liste_from_file("input/"+fichier_trucks) # [(p1,c1) , (p2,c2), ........]
+        lt.sort(key=lambda x: x[1])
+
+
         b= 25*(10**9) #contrainte budg
         depenses=0
-        utilite = 0
+        umax= 0
+        c=0
+        resultat=[]
         while depenses <= b :
-            #  je veux acceder aux lignes du fichier_routes, chaque ligne i>=1 represente le trajet i et son utilite i 
-            g=graph_from_file("input/"+fichier_routes)  #il faudra peut etre deplacer la fct
-            d=g.graph
-            #d.items() me donne une liste tq l'element k contient (clek,valeurk)
-        
-            gg= graph_from_file("input/"+fichier_network)
-            # g sera un graphe tq: cles i -> [(ville j , u i->j),(ville k , u i->k),.......]
-            
-            for i in range (0,len(d.items())):    #on parcours tous les noeuds et donc toutes les villes qui sont le depart d'un trajet dans le fichier routes
-                for ville_i, valeur in d.items[i]:
-                for j in range (0, len(valeur)):
-                    ville_j= valeur[j][0] #rep la ville arrivee du trajet
-                    utilite_ij= valeur[j][1] #rep l'utilite de ce trajet
-                    trajet_ij = (ville_i,ville_j,utilite_ij) 
-                    pmin= gg.min_power(ville_i,ville_j)
-                    # a present on travail dans le fichier trucks
-                    dd=dict_from_file_trucks(fichier_trucks)
-                    liste= dd.items() #dd.items() va etre une liste tq chaque element represente: [p,c]
-                    #trions la liste dd.items suivant le cout mais j pense faut revoir car pb avec liste de liste
-                    liste.sort(key=lambda x: x[1]) # on aura liste de (p,c) trier par cout croissant
+            #methode2, rapide
+            for i in range (0,len(lr)): 
+                l=len(lr)
+                while depenses <= b:
+                    umax=umax+lr[l-i][1]   #l-i car on veux sommer les utilites en partant des plus grandes utilites 
+                    pmin=g.min_power(lr[l-i][0]) #min_power sur le trajet associe a l'utilite prise 
 
-                    for i in range (0,len(liste)):
-                        if liste[i][0]< pmin: # liste[i][0] est puissance donnee dans le fichier truck 
-                            liste.delete(liste[i])
-                    #notre liste a present contient les puiss et cout tq puiss >= pmin et triee par odre croissant de cout
-                    cout_minimal=liste[0][1]
+                    a=False
+                    while a==False:
+                        for j in range (0,len(lt)):
+                            if lt[j][0]>= pmin:
+                                puiss=lt[j][0]
+                                c= lt[j][1] 
+                                break #revoir l'ecriture, j'ai ajoute break parceque je pense qu'il va faire toutes les iterations dans lt sinon
+                        a=True
+                    resultat.append(((puiss,c),lr[l-i][0])) #revoir si qd ils disent return le camion et affection sur le trajet ils veulent (p,c) du camion et pas numero de la ligne associee a ce couple
+                    depenses=depenses+c
+
+        return (umax,resultat)
+    
+    def function_question18_methode1(fichier_trucks,fichier_routes,fichier_network):
+       
+        lr=liste_from_file("input/"+fichier_routes)
+        g= graph_from_file("input/"+fichier_network)
+        #pour le fichier trucks
+        lt=liste_from_file("input/"+fichier_trucks) # [(p1,c1) , (p2,c2), ........]
+        lt.sort(key=lambda x: x[1])
+
+
+        b= 25*(10**9) #contrainte budg
+        
+        #meth1 , exacte
+        for j in range (0,len(lr)):
+            def fct(j,b):
+                depenses=0
+                umax= 0
+                u=0
+                c=0
+                resultat=[]
+                resultat_final=[]
+                l=[]
+                
+                for i in range (j,len(lr)): #on somme les utilites en partant de la ligne i et jusqu'a la ligne k ou on aura depasse la cb
+                    while depenses<=b:
+                        u=u+lr[i][1]
+                        pmin=g.min_power(lr[i][0])
+                        a=False
+                        while a==False:
+                            for j in range (0,len(lt)):
+                                if lt[j][0]>= pmin:
+                                    puiss=lt[j][0]
+                                    c= lt[j][1] 
+                                    a=True
+                                    break #revoir l'ecriture, j'ai ajoute break parceque je pense qu'il va faire toutes les iterations dans lt sinon    
+                        depenses=depenses+c
+                        resultat.append((puiss,c),lr[i][0])
+                        derniere_ligne_atteinte=i
+
+                    l.append((u,derniere_ligne_atteinte,resultat)) # je cree une liste l dont les element sont les utilites finales et les trajet associees aux camions, apres je prendrai max u de la liste l
+                return l
+            
+
+            
+
+            for i in range (0,len(lr)):
+                l=fct(i,b)
+                for k in range ((i+1),len(lr)): #en partant de ma ligne j je veux sommer mais en enlevant une ligne entre j+1 et la fin
+                    #u_en_partant_de_la_lignei on a atteint utilite=l[i][0]
+                    u= l[i][0] - lr[k][1]        #u-u(lignek), maintenant en partant de cette utilite on voit si on peut augmenter notre utilite encore
+                    #maintenant en partant de u=la somme donnee ci dessus on doit continuer a sommer avec u des lignes non deja visites
+                    m= l[i][1] +1   #on commence a sommer les utilites a partir de la ligne (derniere_ligne_atteinte +1)
+                    for v in range (m,len(lr)):
+                        #on reprend algo on comme avec cb .....
+                        #et on rajoute les utilites atteintes et les camions associees au trajet dans ces cas a la liste l
+
+            l.sort()
+        return (umax,resultat_final)=l[len(l)]
+
+
+
                     
 
 
 
 
-def dict_from_file_trucks(filename):
+def liste_from_file(filename):
     f = open("/home/onyxia/work/ensae-prog23/"+filename, "r") #On rajoute le début du chemin pour que le programme trouve le chemin du fichier 
     L = f.readlines()#On transforme le tableau en une liste de chaîne de caractères, avec une chaîne = une ligne 
     lignes=[] 
-    d={}
+    liste=[]
     for i in range(1,len(L)): 
         lignes.append(L[i].split())  #"lignes" est une liste, donc les éléments (qui représentent les lignes de notre tableau) sont des listes de chaînes de caractères 
     for line in lignes: 
-        if len(line)==2: 
-            d[int(line[0])] =int(line[1])
-    return d # d sera tq d[pi]=ci
+        if len(line)==2: #je l'utilise pour le fichier trucks
+            liste.append([int(line[0])] ,int(line[1])) # (p,c)
+        if len(line)==3: #je l'utilise pour le fichier routes
+            liste.append((int(line[0]),int(line[1])),[int(line[3])]) #pour les fichiers trucks on aura ((villea,villeb), uab)
+    return liste
 
 
 
