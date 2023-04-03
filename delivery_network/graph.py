@@ -138,44 +138,7 @@ class Graph:
         chemin= self.get_path_with_power(src, dest, puiss_max) # la derniere fois ou on rentrera dans la boucle puiss va etre modifie eton rentrera dans le cas else donc on ne peut pas mettre puiss
         return (chemin, puiss_max)
 
-    def function_qu18_methode2(fichier_trucks,fichier_routes,fichier_network): 
-        # je veux acceder aux lignes du fichier_routes, chaque ligne i>=1 represente le trajet i=(ville1,ville2) et son utilite i 
-        lr=liste_from_file("input/"+fichier_routes)
-        lr.sort(key=lambda x: x[1]) #lr sera triee par ordre croissant d'utilite 
-        
-        g= graph_from_file("input/"+fichier_network)
-
-        #pour le fichier trucks
-        lt=liste_from_file("input/"+fichier_trucks) # [(p1,c1) , (p2,c2), ........]
-        lt.sort(key=lambda x: x[1])
-
-
-        b= 25*(10**9) #contrainte budg
-        depenses=0
-        umax= 0
-        c=0
-        resultat=[]
-        while depenses <= b :
-            #methode2, rapide
-            for i in range (0,len(lr)): 
-                l=len(lr)
-                while depenses <= b:
-                    umax=umax+lr[l-i][1]   #l-i car on veux sommer les utilites en partant des plus grandes utilites 
-                    pmin=g.min_power(lr[l-i][0]) #min_power sur le trajet associe a l'utilite prise 
-
-                    a=False
-                    while a==False:
-                        for j in range (0,len(lt)):
-                            if lt[j][0]>= pmin:
-                                puiss=lt[j][0]
-                                c= lt[j][1] 
-                                break #revoir l'ecriture, j'ai ajoute break parceque je pense qu'il va faire toutes les iterations dans lt sinon
-                        a=True
-                    resultat.append(((puiss,c),lr[l-i][0])) #revoir si qd ils disent return le camion et affection sur le trajet ils veulent (p,c) du camion et pas numero de la ligne associee a ce couple
-                    depenses=depenses+c
-
-        return (umax,resultat)
-    
+    '''
     def function_question18_methode1(fichier_trucks,fichier_routes,fichier_network):
        
         lr=liste_from_file("input/"+fichier_routes)
@@ -231,37 +194,66 @@ class Graph:
                         #on reprend algo on comme avec cb .....
                         #et on rajoute les utilites atteintes et les camions associees au trajet dans ces cas a la liste l
 
-            l.sort()
+        l.sort()
         return (umax,resultat_final)=l[len(l)]
+'''
 
 
 
-                    
 
 
 
+
+def function_profit(fichier_trucks,fichier_routes,fichier_network): #methode2 rapide
+    # je veux acceder aux lignes du fichier_routes, chaque ligne i>=1 represente le trajet i=(ville1,ville2) et son utilite i 
+    lr=liste_from_file("input/"+ fichier_routes)        
+    lr.sort(key=lambda x: x[1]) #lr sera triee par ordre croissant d'utilite 
+            
+    g= graph_from_file("input/"+fichier_network)
+
+    #pour le fichier trucks
+    lt=liste_from_file("input/"+fichier_trucks) # [(p1,c1) , (p2,c2), ........]
+    lt.sort(key=lambda x: x[1])
+
+
+    b= 25*(10**9) #contrainte budg
+    depenses=0
+    umax= 0
+    c=0
+    resultat=[]
+    while depenses <= b :
+        for i in range (0,len(lr)): 
+            l=len(lr)
+            while depenses <= b:
+                umax=umax+lr[l-i][1]   #l-i car on veux sommer les utilites en partant des plus grandes utilites 
+                pmin=g.min_power(lr[l-i][0]) #min_power sur le trajet associe a l'utilite prise 
+
+                a=False
+                while a==False:
+                    for j in range (0,len(lt)):
+                        if lt[j][0]>= pmin:
+                            puiss=lt[j][0]
+                            c= lt[j][1] 
+                            break #revoir l'ecriture, j'ai ajoute break parceque je pense qu'il va faire toutes les iterations dans lt sinon
+                    a=True
+                resultat.append(((puiss,c),lr[l-i][0])) #revoir si qd ils disent return le camion et affection sur le trajet ils veulent (p,c) du camion et pas numero de la ligne associee a ce couple
+                depenses=depenses+c
+
+    return (umax,resultat)
 
 def liste_from_file(filename):
-    f = open("/home/onyxia/work/ensae-prog23/"+filename, "r") #On rajoute le début du chemin pour que le programme trouve le chemin du fichier 
-    L = f.readlines()#On transforme le tableau en une liste de chaîne de caractères, avec une chaîne = une ligne 
+    f = open("/home/onyxia/work/ensae-prog23/"+filename, "r") 
+    L = f.readlines()
     lignes=[] 
     liste=[]
     for i in range(1,len(L)): 
-        lignes.append(L[i].split())  #"lignes" est une liste, donc les éléments (qui représentent les lignes de notre tableau) sont des listes de chaînes de caractères 
+        lignes.append(L[i].split())  
     for line in lignes: 
         if len(line)==2: #je l'utilise pour le fichier trucks
-            liste.append([int(line[0])] ,int(line[1])) # (p,c)
+            liste.append(int(line[0]) ,int(line[1])) # (p,c)
         if len(line)==3: #je l'utilise pour le fichier routes
-            liste.append((int(line[0]),int(line[1])),[int(line[3])]) #pour les fichiers trucks on aura ((villea,villeb), uab)
+            liste.append((int(line[0]),int(line[1])),int(line[3])) #pour les fichiers trucks on aura ((villea,villeb), uab)
     return liste
-
-
-
-
-
-
-
-
 
 
 
@@ -284,10 +276,6 @@ def graph_from_file(filename):
             g.graph[n]=[] 
             g.nb_nodes+=1 #Le nombre d'arêtes n'a pas été modifié, mais le nombre de sommets a lui changé 
     return g 
-
-
-
-
 
 #Pour le Compte Rendu, cette fonction kruskal n'est pas notre version finale, on n'a pas encore obtenu nos resultats attendus
 def kruskal(graphe): #trions la liste des aretes

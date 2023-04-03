@@ -7,9 +7,17 @@ print(g) # affichage du graphe
 '''
 
 data_path = "input/"
-file_name = "network.02.in"
 
-g = graph_from_file(data_path + file_name)
+fichier_trucks = "trucks.1.in"
+fichier_routes = "routes.1.in"
+fichier_network = "network.1.in"
+#f=function_profit(fichier_trucks,fichier_routes,fichier_network)
+#print(f)
 
+g = graph_from_file(data_path + fichier_network)
+print(g)
+l=liste_from_file(data_path + fichier_routes)
+print(l)
+la=liste_from_file(data_path + fichier_trucks)
+print(la)
 
-print(kruskal(g))
