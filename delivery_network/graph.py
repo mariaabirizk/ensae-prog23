@@ -205,13 +205,13 @@ class Graph:
 
 
 def function_profit(fichier_trucks,fichier_routes,fichier_network): #methode2 rapide
-    # je veux acceder aux lignes du fichier_routes, chaque ligne i>=1 represente le trajet i=(ville1,ville2) et son utilite i 
+     
     lr=liste_from_file("input/"+ fichier_routes)        
     lr.sort(key=lambda x: x[1]) #lr sera triee par ordre croissant d'utilite 
             
     g= graph_from_file("input/"+fichier_network)
 
-    #pour le fichier trucks
+    
     lt=liste_from_file("input/"+fichier_trucks) # [(p1,c1) , (p2,c2), ........]
     lt.sort(key=lambda x: x[1])
 
@@ -227,16 +227,16 @@ def function_profit(fichier_trucks,fichier_routes,fichier_network): #methode2 ra
             umax=umax+lr[l-1-i][1]   #l-i car on veux sommer les utilites en partant des plus grandes utilites 
             p=g.min_power(lr[l-1-i][0][0],lr[l-1-i][0][1]) #min_power sur le trajet associe a l'utilite prise 
             pmin=p[1]
-            a=False
-            while a==False:
-                for j in range (0,len(lt)):
-                    if lt[j][0]>= pmin:
-                        puiss=lt[j][0]
-                        c= lt[j][1] 
-                        a=True                            
-                        resultat.append(((puiss,c),lr[l-1-i][0])) #revoir si qd ils disent return le camion et affection sur le trajet ils veulent (p,c) du camion et pas numero de la ligne associee a ce couple
-                        depenses=depenses+c
-                        break #j'ai ajoute break parceque je pense qu'il va faire toutes les iterations dans lt sinon
+            
+            for j in range (0,len(lt)):
+                if lt[j][0]>= pmin:
+                    puiss=lt[j][0]
+                    c= lt[j][1]                            
+                    resultat.append(((puiss,c),lr[l-1-i][0])) #revoir si qd ils disent return le camion et affection sur le trajet ils veulent (p,c) du camion et pas numero de la ligne associee a ce couple
+                    depenses=depenses+c
+                    break 
+            if depenses>b:
+                break
 
     return (umax,resultat)
 
