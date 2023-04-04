@@ -1,4 +1,4 @@
-from graph import Graph, graph_from_file,liste_from_file , function_profit
+from graph import Graph, graph_from_file,dict_from_file , function_profit
 
 '''
 g = Graph([]) # creation dun objet de type Graph

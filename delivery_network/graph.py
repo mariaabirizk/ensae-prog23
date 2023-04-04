@@ -139,18 +139,17 @@ class Graph:
         return (chemin, puiss_max)
 
     '''
-    def function_question18_methode1(fichier_trucks,fichier_routes,fichier_network):
+    def function_profit_exacte(fichier_trucks,fichier_routes,fichier_network): #meth1, exacte non optimal
        
         lr=liste_from_file("input/"+fichier_routes)
-        g= graph_from_file("input/"+fichier_network)
-        #pour le fichier trucks
-        lt=liste_from_file("input/"+fichier_trucks) # [(p1,c1) , (p2,c2), ........]
-        lt.sort(key=lambda x: x[1])
+        lr.sort(key=lambda x: x[1])
 
+        g= graph_from_file("input/"+fichier_network)
+        
+        lt=liste_from_file("input/"+fichier_trucks) # [(p1,c1) , (p2,c2), ........]
 
         b= 25*(10**9) #contrainte budg
         
-        #meth1 , exacte
         for j in range (0,len(lr)):
             def fct(j,b):
                 depenses=0
@@ -206,14 +205,15 @@ class Graph:
 
 def function_profit(fichier_trucks,fichier_routes,fichier_network): #methode2 rapide
      
-    lr=liste_from_file("input/"+ fichier_routes)        
-    lr.sort(key=lambda x: x[1]) #lr sera triee par ordre croissant d'utilite 
-            
+    dr=dict_from_file("input/"+ fichier_routes)
+    drtrie = dict(sorted(dr.items(), key=lambda x: x[1]))   #lr sera triee par ordre croissant d'utilite 
+    cles_dr=list(drtrie.keys())  #je cree une liste qui contient les cles de drtrie et donc les (villea,villeb)
     g= graph_from_file("input/"+fichier_network)
 
     
-    lt=liste_from_file("input/"+fichier_trucks) # [(p1,c1) , (p2,c2), ........]
-    lt.sort(key=lambda x: x[1])
+    dt=dict_from_file("input/"+fichier_trucks) # d[p1]=c1 ,........
+    dttrie = dict(sorted(dt.items(), key=lambda x: x[1]))
+    cles_dt= list(dttrie.keys())
 
     b= 25*(10**9) #contrainte budg
     depenses=0
@@ -221,38 +221,39 @@ def function_profit(fichier_trucks,fichier_routes,fichier_network): #methode2 ra
     c=0
     resultat=[]
     
-    for i in range (0,len(lr)): 
-        l=len(lr)
+    for i in range (0,len(dr)): 
+        l=len(dr)
         if depenses <= b:
-            umax=umax+lr[l-1-i][1]   #l-i car on veux sommer les utilites en partant des plus grandes utilites 
-            p=g.min_power(lr[l-1-i][0][0],lr[l-1-i][0][1]) #min_power sur le trajet associe a l'utilite prise 
+            umax=umax+dr[cles_dr[l-1-i]]   #l-1-i car on veux sommer les utilites en partant des plus grandes utilites 
+            p=g.min_power(cles_dr[l-1-i][0],cles_dr[l-1-i][1]) #min_power sur le trajet associe a l'utilite prise 
             pmin=p[1]
             
-            for j in range (0,len(lt)):
-                if lt[j][0]>= pmin:
-                    puiss=lt[j][0]
-                    c= lt[j][1]                            
-                    resultat.append(((puiss,c),lr[l-1-i][0])) #revoir si qd ils disent return le camion et affection sur le trajet ils veulent (p,c) du camion et pas numero de la ligne associee a ce couple
+            for j in range (0,len(dt)):
+                if cles_dt[j]>= pmin: #le probleme si je fais pas sort j'optimiserai pas c paye
+                    puiss= cles_dt[j]
+                    c= dttrie[cles_dt[j]]                            
+                    resultat.append(((puiss,c),cles_dr[l-1-i])) #revoir si qd ils disent return le camion et affection sur le trajet ils veulent (p,c) du camion et pas numero de la ligne associee a ce couple
                     depenses=depenses+c
                     break 
-            if depenses>b:
-                break
+        else: 
+            break
 
     return (umax,resultat)
 
-def liste_from_file(filename):
+def dict_from_file(filename):
     f = open("/home/onyxia/work/ensae-prog23/"+filename, "r") 
     L = f.readlines()
     lignes=[] 
-    liste=[]
+    dictionnaire={}
     for i in range(1,len(L)): 
         lignes.append(L[i].split())  
     for line in lignes: 
-        if len(line)==2: #je l'utilise pour le fichier trucks
-            liste.append((int(line[0]) ,int(line[1]))) # (p,c)
-        if len(line)==3: #je l'utilise pour le fichier routes
-            liste.append(((int(line[0]),int(line[1])),int(line[2]))) #pour les fichiers trucks on aura ((villea,villeb), uab)
-    return liste
+        if len(line)==2: #je l'utilise pour les fichiers trucks
+            dictionnaire[int(line[0])]= int(line[1]) # d{p}=c
+
+        if len(line)==3: #je l'utilise pour les fichiers routes
+            dictionnaire[(int(line[0]),int(line[1]))]= int(line[2]) #d{(villea,villeb)}=uab
+    return dictionnaire
 
 
 
