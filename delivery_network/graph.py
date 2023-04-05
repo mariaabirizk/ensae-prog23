@@ -138,7 +138,135 @@ class Graph:
         chemin= self.get_path_with_power(src, dest, puiss_max) # la derniere fois ou on rentrera dans la boucle puiss va etre modifie eton rentrera dans le cas else donc on ne peut pas mettre puiss
         return (chemin, puiss_max)
 
+    #Question 12
+    #On utilise des programmes auxiliaires qui permettent la méthode "Union-find" pour construire un arbre, comme proposé par l'énoncé.
+    def find(self,i,parent):
+        if parent[i-1]==[]:
+            return i
+        parent[i-1]=self.find(parent[i-1],parent)
+        return parent[i-1]
+
+    def union(self,x,y,parent):
+        parent[self.find(x,parent)-1]=self.find(y,parent)
+
+    #On utilise ensuite deux nouveaux programmes auxiliaires qui vont nous permettre de trier les arêtes selon leurs puissances, en utilisant la méthode du "tri fusion".
+    def trifusionquadruplet(self,L):
+        n=len(L)
+        if n<=1:
+            return L
+        else : 
+            return self.fusionquadruplet(self.trifusionquadruplet(L[0 : n//2]),self.trifusionquadruplet(L[n//2 : n]))
+
+    def fusionquadruplet(self,L,M):
+        if L==[]:
+            return M
+        if M==[]:
+            return L
+        if L[0][2]<=M[0][2]:
+            return [L[0]]+self.fusionquadruplet(L[1 :len(L)],M)
+        return [M[0]]+self.fusionquadruplet(M[1 :len(M)],L)
+
+    #On développe enfin la fonctio, qui renvoie l'arbre couvrant de poids minimal du graphe
+    def kruskal(self):
+        E=Graph([])#Graphe (arbre) qu'on va vouloir renvoyer
+        Liste=[] #Liste dans laquelle on va stocker des quadruplets (noeud1,noeud2,puissance,dist) --> C'est la liste qu'on triera
+        for u in self.graph:
+            for V in self.graph[u]:
+                v=V[0]
+                if u<v:
+                    t=(u,v,V[1],V[2])
+                else : 
+                    t=(v,u,V[1],V[2]) #On prend cette précaution afin de ne pas placer deux fois les mêmes arêts dans la liste
+                if t not in Liste:
+                    Liste.append(t)
+        parent=[[] for i in range (self.nb_nodes)] #Liste des parents qui sera utile pour la méthode Union-find
+        L=self.trifusionquadruplet(Liste) #On trie les arêtes par puissance croissante
+        for U in L: 
+            u=U[0] ; v=U[1] ; power=U[2] ; dist=U[3]
+            if self.find(u,parent)!=self.find(v,parent): #On s'assure que u et v ne sont pas déjà reliés, sinon on formerait des cycles (et on n'obtiendrait donc pas d'arbre).
+                E.add_edge(u,v,power,dist) 
+                self.union(u,v,parent) #On signale que u et v sont désormais reliés
+        return E
+
+    #Question 14
+    #On modifie légèrement la fonction "get_path_with_power" et sa fonction auxiliaire, car dans le cas d'un arbre, on sait que le chemin est unique. On ne prend plus de puissance en entrée
+    def explorer3(self,ville,dest,visite,trajet,liste_puissance):
+        if ville==dest: #On se place dans le cas dans lequel on arrive à destination.
+            return (trajet,sum(liste_puissance)) #On renvoie le trajet effectué, qui est un trajet effectif pour reliser 'src' à 'dest'.
+        visite.append(ville) #On déclare 'ville' comme un ville visitée.
+        for voisins in self.graph[ville]: #On parcourt tous les voisins de 'ville'.
+            voisin=voisins[0] #'voisin' désigne le numéro du noeud voisin
+            puissance=voisins[1] #'puissance' désigne la puissance minimale nécessaire pour parcourir l'arête
+            if voisin == dest: #On regarde si la ville voisine est la ville d'arrivée...
+                trajet.append(dest) 
+                liste_puissance.append(puissance)
+                return (trajet,max(liste_puissance)) #... alors cela signifie qu'on est arrivés au résultat, donc on le renvoie
+
+            else: #On se place dans le cas où la ville qu'on regarde n'est pas la ville d'arrivée, ou qu'elle l'est mais qu'on ne peut pas l'atteindre par le chemin choisi.
+                if voisin not in visite : #On se place dans le cas où le voisin n'est pas visité, et on a assez de puissance pour aller le rejoindre.
+                    trajet.append(voisin)#On peut donc l'ajouter au trajet
+                    liste_puissance.append(puissance)
+                    if self.explorer3(voisin,dest,visite,trajet,liste_puissance) is None: #Si on obtient "None", c'est qu'on a fait toute la boucle avec 'voisin' sans arriver à relier la ville à 'dest'.
+                        trajet.pop( )   #Cela signifie que c'était une mauvaise idée de passer par 'voisin', et on le retire du trajet.
+                        liste_puissance.pop()               #On remarque qu'on ne rebouclera pas à l'infini car désormais 'voisin' est dans 'visiste'.
+                    else:
+                        return (trajet,sum(liste_puissance))
+
+    def new_get_path_with_power(self, src, dest):
+        #Comme 'self.connected_components()' est une partition des noeuds du graphe, il y aura forcément un et un seul 'l' dans 'self.connected_components()' tel que 'W=l'.     #On se place dans le cas où 'src' et 'dest' sont dans la même composante connexe.
+        liste_puissance=[]
+        visite=[]       #On initialise les voisins visités de 'src' à l'ensemble vide.
+        trajet=[src]    #On initialise le trajet pour qu'il commence toujours par 'src'.
+        return self.explorer3(src,dest,visite,trajet,liste_puissance) #On utilise la fonction auxiliaire définie ci-dessus.
     
+    def new_power_min(self,src,dest):
+        A=self.kruskal()
+        return A.new_get_path_with_power(src, dest)
+    
+    def new_new_power_min(self,src,dest):
+        return self.new_get_path_with_power(src, dest)
+    
+    def parents(self): #j'ai pas fixé de racine
+        a= self.kruskal() #on a un arbre
+        dict_node_parents={}
+        for node in self.nodes():
+            parents=[]
+            for parent in self.nodes():
+                if node in a[parent]:
+                    parents.append(parent)
+                    if dict_node_parents[node]=[]
+                        dict_node_parents[node]= parents
+                    else:
+                        dict_node_parents[node].append(parents)
+        return dict_node_parents
+    
+    def new_get_path(self,src,dest):
+        visite=[]
+        chemin=[src] # si on def chemin dans explorer a chaque fois qu'on explore un voisin le chemin va changer et ne sera plus initialement debutant de src
+        def explorer(ville):
+            if ville == dest:
+                return chemin #on n'a pas besoin de voir la puissance comme c'est la meme ville donc y a pas de route a traversee
+            visite.append(ville) # je l'avais mis a la fin de la boucle for mais ca ne marche pas vu que ca rajoute la ville visitee a la fin apres avoir reparcouru les voisins deja visites
+            for voisins in self.parents(src):
+                voisin=voisins[0]
+                puissance=voisins[1]
+                if voisin == dest:
+                    if power >= puissance:                                
+                        chemin.append(dest)
+                        return chemin
+                            
+                else:
+                    if voisin not in visite and power>=puissance:
+                        chemin.append(voisin)                                
+                        if explorer(voisin) is None:
+                            chemin.pop( ) #pour effacer toutes les villes ajouter inutilles
+                        else:
+                            return chemin
+                                    
+                        
+        return explorer(src)
+
+
 def function_profit_exacte(fichier_trucks,fichier_routes,fichier_network): #meth1, exacte non optimal
        
     lr=liste_from_file("input/"+fichier_routes)
@@ -187,22 +315,12 @@ def function_profit(fichier_trucks,fichier_routes,fichier_network): #methode2 ra
     lr=liste_from_file("input/"+fichier_routes)
     lr.sort(key=lambda x: x[1])
 
-    g= graph_from_file("input/"+fichier_network)        
+    gr= graph_from_file("input/"+fichier_network)
+    g= g.kruskal()        
     lt=liste_from_file("input/"+fichier_trucks) # [(p1,c1) , (p2,c2), ........]
     lt.sort(key=lambda x:x[1])
 
-    '''
-    dr=dict_from_file("input/"+ fichier_routes)
-    drtrie = dict(sorted(dr.items(), key=lambda x: x[1]))   #lr sera triee par ordre croissant d'utilite
-    # trie suivant les valeurs du dict 
-    cles_dr=list(drtrie.keys())  #je cree une liste qui contient les cles de drtrie et donc les (villea,villeb)
-    g= graph_from_file("input/"+fichier_network)
 
-    
-    dt=dict_from_file("input/"+fichier_trucks) # d[p1]=c1 ,........
-    dttrie = dict(sorted(dt.items(), key=lambda x: x[1]))
-    cles_dt= list(dttrie.keys())
-    '''
     b= 25*(10**9) #contrainte budg
     depenses=0
     umax= 0
