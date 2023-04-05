@@ -137,7 +137,7 @@ class Graph:
         
         chemin= self.get_path_with_power(src, dest, puiss_max) # la derniere fois ou on rentrera dans la boucle puiss va etre modifie eton rentrera dans le cas else donc on ne peut pas mettre puiss
         return (chemin, puiss_max)
-+
+
     
 def function_profit_exacte(fichier_trucks,fichier_routes,fichier_network): #meth1, exacte non optimal
        
