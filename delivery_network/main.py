@@ -8,9 +8,9 @@ print(g) # affichage du graphe
 
 data_path = "input/"
 
-fichier_trucks = "trucks.1.in"
-fichier_routes = "routes.1.in"
-fichier_network = "network.1.in"
+fichier_trucks = "trucks.b.in"
+fichier_routes = "routes.b.in"
+fichier_network = "network.b.in"
 f=function_profit_exacte(fichier_trucks,fichier_routes,fichier_network)
 print(f)
 

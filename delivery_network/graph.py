@@ -153,25 +153,27 @@ def function_profit_exacte(fichier_trucks,fichier_routes,fichier_network): #meth
     permutations= list(itertools.permutations(lr)) #liste ou sera stockés toutes les permutations
 
     umax=0
-    depenses=0
     resultat_final=[]
     cb= 25* (10**9)
 
     for perm in permutations: #pour chaque element de la liste permutations cad chaque ensemble d'utilite
         u=0
         resultat=[]
+        depenses=0
         for i in range (0,len(perm)):
             if depenses <= cb:
-                u=u+ perm[i][1]
-                p=g.min_power(perm[i][0])
+                #u=u+ perm[i][1]
+                p=g.min_power(perm[i][0][0],perm[i][0][1])
                 pmin=p[1]
-                for j in range(0,lt):
+                for j in range(0,len(lt)):
                     if lt[j][0]>= pmin:
                         puiss= lt[j][0]
                         c=lt[j][1]
-                        depenses=depenses+c                            
-                        break
-                resultat.append(((puiss,c),perm[i][0]))
+                        depenses=depenses+c
+                        if depenses<=cb: #pour s'assurer qu'une fois rajouter on ne depassera pas cb
+                            resultat.append(((puiss,c),perm[i][0]))
+                            u=u+perm[i][1] 
+                        break   
             else:
                 break
         if u>= umax:
