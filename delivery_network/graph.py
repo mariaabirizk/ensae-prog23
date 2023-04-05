@@ -137,19 +137,158 @@ class Graph:
         
         chemin= self.get_path_with_power(src, dest, puiss_max) # la derniere fois ou on rentrera dans la boucle puiss va etre modifie eton rentrera dans le cas else donc on ne peut pas mettre puiss
         return (chemin, puiss_max)
-
-    '''
-    def function_profit_exacte(fichier_trucks,fichier_routes,fichier_network): #meth1, exacte non optimal
++
+    
+def function_profit_exacte(fichier_trucks,fichier_routes,fichier_network): #meth1, exacte non optimal
        
-        lr=liste_from_file("input/"+fichier_routes)
-        lr.sort(key=lambda x: x[1])
+    lr=liste_from_file("input/"+fichier_routes)
+    g= graph_from_file("input/"+fichier_network)        
+    lt=liste_from_file("input/"+fichier_trucks) # [(p1,c1) , (p2,c2), ........]
 
-        g= graph_from_file("input/"+fichier_network)
-        
-        lt=liste_from_file("input/"+fichier_trucks) # [(p1,c1) , (p2,c2), ........]
+    '''on veut tester toutes les listes possibles qu'on peut faire a partir du fichier routes et trouver dans 
+    chacune umax pour ensuite trouver le max de tous        
+    '''
 
-        b= 25*(10**9) #contrainte budg
+    import itertools
+    permutations= list(itertools.permutations(lr)) #liste ou sera stockés toutes les permutations
+
+    umax=0
+    depenses=0
+    resultat_final=[]
+    cb= 25* (10**9)
+
+    for perm in permutations: #pour chaque element de la liste permutations cad chaque ensemble d'utilite
+        u=0
+        resultat=[]
+        for i in range (0,len(perm)):
+            if depenses <= cb:
+                u=u+ perm[i][1]
+                p=g.min_power(perm[i][0])
+                pmin=p[1]
+                for j in range(0,lt):
+                    if lt[j][0]>= pmin:
+                        puiss= lt[j][0]
+                        c=lt[j][1]
+                        depenses=depenses+c                            
+                        break
+                resultat.append(((puiss,c),perm[i][0]))
+            else:
+                break
+        if u>= umax:
+            umax=u
+            resultat_final=resultat
+    return (umax,resultat_final)
         
+
+def function_profit(fichier_trucks,fichier_routes,fichier_network): #methode2 rapide
+     
+    dr=dict_from_file("input/"+ fichier_routes)
+    drtrie = dict(sorted(dr.items(), key=lambda x: x[1]))   #lr sera triee par ordre croissant d'utilite
+    # trie suivant les valeurs du dict 
+    cles_dr=list(drtrie.keys())  #je cree une liste qui contient les cles de drtrie et donc les (villea,villeb)
+    g= graph_from_file("input/"+fichier_network)
+
+    
+    dt=dict_from_file("input/"+fichier_trucks) # d[p1]=c1 ,........
+    dttrie = dict(sorted(dt.items(), key=lambda x: x[1]))
+    cles_dt= list(dttrie.keys())
+
+    b= 25*(10**9) #contrainte budg
+    depenses=0
+    umax= 0
+    c=0
+    resultat=[]
+    
+    for i in range (0,len(dr)): 
+        l=len(dr)
+        if depenses <= b:
+            umax=umax+dr[cles_dr[l-1-i]]   #l-1-i car on veux sommer les utilites en partant des plus grandes utilites 
+            p=g.min_power(cles_dr[l-1-i][0],cles_dr[l-1-i][1]) #min_power sur le trajet associe a l'utilite prise 
+            pmin=p[1]
+            
+            for j in range (0,len(dt)):
+                if cles_dt[j]>= pmin: #le probleme si je fais pas sort j'optimiserai pas c paye
+                    puiss= cles_dt[j]
+                    c= dttrie[cles_dt[j]]                            
+                    resultat.append(((puiss,c),cles_dr[l-1-i])) #revoir si qd ils disent return le camion et affection sur le trajet ils veulent (p,c) du camion et pas numero de la ligne associee a ce couple
+                    depenses=depenses+c
+                    break 
+        else: 
+            break
+
+    return (umax,resultat)
+ # remettre la version avec liste celle la est non correcte   
+
+def liste_from_file(filename):
+    f = open("/home/onyxia/work/ensae-prog23/"+filename, "r") 
+    L = f.readlines()
+    lignes=[] 
+    liste=[]
+    for i in range(1,len(L)): 
+        lignes.append(L[i].split())  
+    for line in lignes: 
+        if len(line)==2: #je l'utilise pour les fichiers trucks
+            liste.append((int(line[0]),int(line[1]))) #(p,c)
+        
+        if len(line)==3: #je l'utilise pour les fichiers routes
+            liste.append(((int(line[0]),int(line[1])),int(line[2]))) #((villea,villeb),uab)
+    return liste
+
+
+
+def graph_from_file(filename):
+    f = open("/home/onyxia/work/ensae-prog23/"+filename, "r") #On rajoute le début du chemin pour que le programme trouve le chemin du fichier 
+    L = f.readlines()#On transforme le tableau en une liste de chaîne de caractères, avec une chaîne = une ligne 
+    lignes=[] 
+    g=Graph([]) 
+    for i in range(1,len(L)): 
+        lignes.append(L[i].split()) #"lignes" est une liste, donc les éléments (qui représentent les lignes de notre tableau) sont des listes de chaînes de caractères 
+    for line in lignes: 
+        if len(line)==3: #cad les lignes qui contiennent depart arrivee puissance
+            g.add_edge(int(line[0]),int(line[1]),int(line[2]),1) 
+        else : 
+            g.add_edge(int(line[0]),int(line[1]),int(line[2]),int(line[3])) 
+    #Attention ! Tous les sommets ne sont pas forcément reliés à d'autres sommets ! Dans cette partie du code, on s'occupe de mettre dans le graphe les sommets isolés 
+    nb_nodes=int(L[0].split()[0]) #Le nombre de sommets est donné par le premier nombre de la première ligne 
+    for n in range(1,nb_nodes+1): #On suppose ici que s'il y a n noeuds, tous les noeuds sont exactement tous les numéros de 1 à n. 
+        if n not in g.graph: 
+            g.graph[n]=[] 
+            g.nb_nodes+=1 #Le nombre d'arêtes n'a pas été modifié, mais le nombre de sommets a lui changé 
+    return g 
+
+
+#Pour le Compte Rendu, cette fonction kruskal n'est pas notre version finale, on n'a pas encore obtenu nos resultats attendus
+def kruskal(graphe): #trions la liste des aretes
+    #1-doit retourner un element de type Graph de meme nombre de noeuds que graphe
+    nouvgraphe=Graph()
+
+    #2- trions les aretes de "graphe" par ordre croissant
+
+    d={} # je veux stocker dans d les aretes et la puissance associee a chacune
+    l=[] #je veux stocker dans l les puissances
+    for i in range (0,len(graphe.graph)): # ma bhot () car c est pas une methode mais attribut
+        for voisin in graphe.graph[i]: #cad je regarde pour le noeud i ses voisins
+            if (i,voisin[0]) or (voisin[0],i) not in d:
+                d[voisin[1]].append(i,voisin[0])
+                l.append(voisin[1])
+    #on obtient ainsi d un dictionnaire dont les cles sont les puissances des aretes et les valeurs sont les aretes
+    l.sort()
+    #a present pour acceder aux aretes de puissance dans l: on a qu'a faire d[la puissance en question]
+
+    #3-construisons nouvgraphe
+    for j in range (0,len(l)): #pour une puissance j 
+        for arete in d[l[j]]: #d[l[j]] peut contenir plusieurs aretes 
+
+            #dans if on met une condition pour ne pas former de cycle en ajoutant cette nouvelle arete
+            # si les deux etremites des aretes ont etes visites plus que 2 fois on risque d'obtenir un cycle si on la rajoute une 3e
+            if nouvgraphe.get_path_with_power(arete[0], arete[1], l[-1]) is not None:
+                nouvgraphe.add_edge(arete[0],arete[1],l[j])
+############################################ continuer et mettre la fonction dans la class Graph 
+    return (nouvgraphe)
+
+
+
+'''
         for j in range (0,len(lr)):
             def fct(j,b):
                 depenses=0
@@ -195,113 +334,5 @@ class Graph:
 
         l.sort()
         return (umax,resultat_final)=l[len(l)]
+
 '''
-
-
-
-
-
-
-
-def function_profit(fichier_trucks,fichier_routes,fichier_network): #methode2 rapide
-     
-    dr=dict_from_file("input/"+ fichier_routes)
-    drtrie = dict(sorted(dr.items(), key=lambda x: x[1]))   #lr sera triee par ordre croissant d'utilite 
-    cles_dr=list(drtrie.keys())  #je cree une liste qui contient les cles de drtrie et donc les (villea,villeb)
-    g= graph_from_file("input/"+fichier_network)
-
-    
-    dt=dict_from_file("input/"+fichier_trucks) # d[p1]=c1 ,........
-    dttrie = dict(sorted(dt.items(), key=lambda x: x[1]))
-    cles_dt= list(dttrie.keys())
-
-    b= 25*(10**9) #contrainte budg
-    depenses=0
-    umax= 0
-    c=0
-    resultat=[]
-    
-    for i in range (0,len(dr)): 
-        l=len(dr)
-        if depenses <= b:
-            umax=umax+dr[cles_dr[l-1-i]]   #l-1-i car on veux sommer les utilites en partant des plus grandes utilites 
-            p=g.min_power(cles_dr[l-1-i][0],cles_dr[l-1-i][1]) #min_power sur le trajet associe a l'utilite prise 
-            pmin=p[1]
-            
-            for j in range (0,len(dt)):
-                if cles_dt[j]>= pmin: #le probleme si je fais pas sort j'optimiserai pas c paye
-                    puiss= cles_dt[j]
-                    c= dttrie[cles_dt[j]]                            
-                    resultat.append(((puiss,c),cles_dr[l-1-i])) #revoir si qd ils disent return le camion et affection sur le trajet ils veulent (p,c) du camion et pas numero de la ligne associee a ce couple
-                    depenses=depenses+c
-                    break 
-        else: 
-            break
-
-    return (umax,resultat)
-
-def dict_from_file(filename):
-    f = open("/home/onyxia/work/ensae-prog23/"+filename, "r") 
-    L = f.readlines()
-    lignes=[] 
-    dictionnaire={}
-    for i in range(1,len(L)): 
-        lignes.append(L[i].split())  
-    for line in lignes: 
-        if len(line)==2: #je l'utilise pour les fichiers trucks
-            dictionnaire[int(line[0])]= int(line[1]) # d{p}=c
-
-        if len(line)==3: #je l'utilise pour les fichiers routes
-            dictionnaire[(int(line[0]),int(line[1]))]= int(line[2]) #d{(villea,villeb)}=uab
-    return dictionnaire
-
-
-
-def graph_from_file(filename):
-    f = open("/home/onyxia/work/ensae-prog23/"+filename, "r") #On rajoute le début du chemin pour que le programme trouve le chemin du fichier 
-    L = f.readlines()#On transforme le tableau en une liste de chaîne de caractères, avec une chaîne = une ligne 
-    lignes=[] 
-    g=Graph([]) 
-    for i in range(1,len(L)): 
-        lignes.append(L[i].split()) #"lignes" est une liste, donc les éléments (qui représentent les lignes de notre tableau) sont des listes de chaînes de caractères 
-    for line in lignes: 
-        if len(line)==3: #cad les lignes qui contiennent depart arrivee puissance
-            g.add_edge(int(line[0]),int(line[1]),int(line[2]),1) 
-        else : 
-            g.add_edge(int(line[0]),int(line[1]),int(line[2]),int(line[3])) 
-    #Attention ! Tous les sommets ne sont pas forcément reliés à d'autres sommets ! Dans cette partie du code, on s'occupe de mettre dans le graphe les sommets isolés 
-    nb_nodes=int(L[0].split()[0]) #Le nombre de sommets est donné par le premier nombre de la première ligne 
-    for n in range(1,nb_nodes+1): #On suppose ici que s'il y a n noeuds, tous les noeuds sont exactement tous les numéros de 1 à n. 
-        if n not in g.graph: 
-            g.graph[n]=[] 
-            g.nb_nodes+=1 #Le nombre d'arêtes n'a pas été modifié, mais le nombre de sommets a lui changé 
-    return g 
-
-#Pour le Compte Rendu, cette fonction kruskal n'est pas notre version finale, on n'a pas encore obtenu nos resultats attendus
-def kruskal(graphe): #trions la liste des aretes
-    #1-doit retourner un element de type Graph de meme nombre de noeuds que graphe
-    nouvgraphe=Graph()
-
-    #2- trions les aretes de "graphe" par ordre croissant
-
-    d={} # je veux stocker dans d les aretes et la puissance associee a chacune
-    l=[] #je veux stocker dans l les puissances
-    for i in range (0,len(graphe.graph)): # ma bhot () car c est pas une methode mais attribut
-        for voisin in graphe.graph[i]: #cad je regarde pour le noeud i ses voisins
-            if (i,voisin[0]) or (voisin[0],i) not in d:
-                d[voisin[1]].append(i,voisin[0])
-                l.append(voisin[1])
-    #on obtient ainsi d un dictionnaire dont les cles sont les puissances des aretes et les valeurs sont les aretes
-    l.sort()
-    #a present pour acceder aux aretes de puissance dans l: on a qu'a faire d[la puissance en question]
-
-    #3-construisons nouvgraphe
-    for j in range (0,len(l)): #pour une puissance j 
-        for arete in d[l[j]]: #d[l[j]] peut contenir plusieurs aretes 
-
-            #dans if on met une condition pour ne pas former de cycle en ajoutant cette nouvelle arete
-            # si les deux etremites des aretes ont etes visites plus que 2 fois on risque d'obtenir un cycle si on la rajoute une 3e
-            if nouvgraphe.get_path_with_power(arete[0], arete[1], l[-1]) is not None:
-                nouvgraphe.add_edge(arete[0],arete[1],l[j])
-############################################ continuer et mettre la fonction dans la class Graph 
-    return (nouvgraphe)
