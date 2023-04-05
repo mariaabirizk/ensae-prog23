@@ -184,6 +184,14 @@ def function_profit_exacte(fichier_trucks,fichier_routes,fichier_network): #meth
 
 def function_profit(fichier_trucks,fichier_routes,fichier_network): #methode2 rapide
      
+    lr=liste_from_file("input/"+fichier_routes)
+    lr.sort(key=lambda x: x[1])
+
+    g= graph_from_file("input/"+fichier_network)        
+    lt=liste_from_file("input/"+fichier_trucks) # [(p1,c1) , (p2,c2), ........]
+    lt.sort(key=lambda x:x[1])
+
+    '''
     dr=dict_from_file("input/"+ fichier_routes)
     drtrie = dict(sorted(dr.items(), key=lambda x: x[1]))   #lr sera triee par ordre croissant d'utilite
     # trie suivant les valeurs du dict 
@@ -194,32 +202,33 @@ def function_profit(fichier_trucks,fichier_routes,fichier_network): #methode2 ra
     dt=dict_from_file("input/"+fichier_trucks) # d[p1]=c1 ,........
     dttrie = dict(sorted(dt.items(), key=lambda x: x[1]))
     cles_dt= list(dttrie.keys())
-
+    '''
     b= 25*(10**9) #contrainte budg
     depenses=0
     umax= 0
     c=0
     resultat=[]
     
-    for i in range (0,len(dr)): 
+    for i in range (0,len(lr)): 
         l=len(dr)
         if depenses <= b:
-            umax=umax+dr[cles_dr[l-1-i]]   #l-1-i car on veux sommer les utilites en partant des plus grandes utilites 
-            p=g.min_power(cles_dr[l-1-i][0],cles_dr[l-1-i][1]) #min_power sur le trajet associe a l'utilite prise 
+            p=g.min_power(lr[i][0][0],lr[i][0][1])
             pmin=p[1]
-            
-            for j in range (0,len(dt)):
-                if cles_dt[j]>= pmin: #le probleme si je fais pas sort j'optimiserai pas c paye
-                    puiss= cles_dt[j]
-                    c= dttrie[cles_dt[j]]                            
-                    resultat.append(((puiss,c),cles_dr[l-1-i])) #revoir si qd ils disent return le camion et affection sur le trajet ils veulent (p,c) du camion et pas numero de la ligne associee a ce couple
+            for j in range(0,len(lt)):
+                if lt[j][0]>= pmin:
+                    puiss= lt[j][0]
+                    c=lt[j][1]
                     depenses=depenses+c
-                    break 
-        else: 
+                    if depenses<=b: #pour s'assurer qu'une fois rajouter on ne depassera pas cb
+                        resultat.append(((puiss,c),lr[i][0]))
+                        u=u+lr[i][1] 
+                    break   
+        else:
             break
-
+    
     return (umax,resultat)
- # remettre la version avec liste celle la est non correcte   
+
+   
 
 def liste_from_file(filename):
     f = open("/home/onyxia/work/ensae-prog23/"+filename, "r") 
